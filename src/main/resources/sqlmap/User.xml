@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="org.mybatis">
+
+  <resultMap type="User" id="UserList">
+    <result property="id" column="id" />
+    <result property="userName" column="userName"/>
+    <result property="userAge" column="userAge" />
+    <result property="userAddress" column="userAddress"/>
+  </resultMap>
+
+  <select id="selectAllUserId" resultType="java.lang.Integer">
+        select id from user
+    </select>
+
+  <select id="findUserById" parameterType="int" resultType="User">
+        SELECT * FROM USER WHERE id=#{id}
+    </select>
+
+
+  <insert id="insertIntoUser" parameterType="User">
+       insert into USER (id, userName, userAge, userAddress) values (
+          #{id}, #{userName}, #{userAge}, #{userAddress}
+       )
+   </insert>
+
+  <insert id="insertUsers" useGeneratedKeys="true" keyProperty="id">
+    insert into user (id, userName, userAge, userAddress) values
+    <foreach item="item" collection="list" separator=",">
+      (#{item.id}, #{item.userName}, #{item.userAge}, #{item.userAddress})
+    </foreach>
+  </insert>
+
+  <update id="updateUser" parameterType="User">
+    update user
+    <set>
+      <if test="userName != null">userName = #{userName},</if>
+      <if test="userAge != null">userAge = #{userAge},</if>
+      <if test="userAddress != null">userAddress = #{userAddress}</if>
+    </set>
+    where id = #{id}
+  </update>
+
+  <delete id="deleteUser" parameterType="java.lang.Integer">
+      delete from user where id = #{id}
+    </delete>
+
+</mapper>
