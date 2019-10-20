@@ -18,12 +18,12 @@
     </select>
 
   <select id="findUserById" parameterType="int" resultType="User">
-        SELECT * FROM USER WHERE id=#{id}
+        SELECT * FROM user WHERE id=#{id}
     </select>
 
 
   <insert id="insertIntoUser" parameterType="User">
-       insert into USER (id, userName, userAge, userAddress) values (
+       insert into user (id, userName, userAge, userAddress) values (
           #{id}, #{userName}, #{userAge}, #{userAddress}
        )
    </insert>

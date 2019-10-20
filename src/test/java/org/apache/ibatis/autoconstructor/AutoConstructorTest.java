@@ -14,6 +14,9 @@
  *    limitations under the License.
  */
 package org.apache.ibatis.autoconstructor;
+/**
+ * 测试方法
+ */
 
 import org.apache.ibatis.BaseDataTest;
 import org.apache.ibatis.exceptions.PersistenceException;
