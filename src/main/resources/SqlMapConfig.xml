@@ -16,7 +16,7 @@
   <!-- 别名定义 -->
 
   <typeAliases>
-    <typeAlias type="com.aaron.ren.User" alias="User"/>
+    <typeAlias type="com.aaron.ren.normal.User" alias="User"/>
     <package name="com.aaron.ren"/>
   </typeAliases>
 

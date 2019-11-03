@@ -1,4 +1,4 @@
-package com.aaron.ren;
+package com.aaron.ren.normal;
 
 import lombok.Data;
 
