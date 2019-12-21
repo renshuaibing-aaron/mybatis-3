@@ -12,7 +12,8 @@ public class App {
     context.refresh();
 
     //数据库查询
-    UserMapper userMapper = context.getBean(UserMapper.class);
-    System.out.println(userMapper.findAll());
+    Service service = context.getBean(Service.class);
+
+    System.out.println(service.findAll());
   }
 }

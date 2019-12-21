@@ -17,3 +17,9 @@
  * Base package for handing plugins.
  */
 package org.apache.ibatis.plugin;
+/*
+*
+* 插件包
+* Mybatis 自身的功能虽然强大，但是并不能完美切合所有的应用场景，因此 MyBatis 提供了插件接口，我们可以通过添加用户自定义插件的方式对 MyBatis 进行扩展。
+* 用户自定义插件也可以改变 Mybatis 的默认行为，例如，我们可以拦截 SQL 语句并对其进行重写。
+* */

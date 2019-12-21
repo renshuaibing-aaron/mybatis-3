@@ -19,6 +19,7 @@ import java.util.Properties;
 
 /**
  * @author Clinton Begin
+ * 拦截器接口
  */
 public interface Interceptor {
 

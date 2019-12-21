@@ -9,7 +9,7 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import javax.sql.DataSource;
 
 @Configuration
-@MapperScan("com.learn.mybatis_info.mybatis_info.mappers")//扫描mapper
+@MapperScan("com.aaron.ren.spring")//扫描mapper
 public class AppConfig {
 
   /**

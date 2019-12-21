@@ -5,6 +5,8 @@
 <configuration>
   <!-- 加载属性文件 -->
   <properties resource="db.properties">
+
+
     <!--properties中还可以配置一些属性名和属性值  -->
   </properties>
   <!-- 全局配置参数，需要时再设置 -->
@@ -16,7 +18,7 @@
   <!-- 别名定义 -->
 
   <typeAliases>
-    <typeAlias type="com.aaron.ren.normal.User" alias="User"/>
+    <typeAlias type="com.aaron.ren.normal.UserEntity" alias="UserEntity"/>
     <package name="com.aaron.ren"/>
   </typeAliases>
 
