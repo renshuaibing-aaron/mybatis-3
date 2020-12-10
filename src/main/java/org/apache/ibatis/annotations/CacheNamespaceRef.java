@@ -22,9 +22,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * The annotation that reference a cache.
+ * The xmltype that reference a cache.
  * <p>
- * If you use this annotation, should be specified either {@link #value()} or {@link #name()} attribute.
+ * If you use this xmltype, should be specified either {@link #value()} or {@link #name()} attribute.
  * </p>
  * @author Clinton Begin
  * @author Kazuki Shimizu

@@ -1,18 +1,3 @@
-/**
- *    Copyright 2009-2018 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.executor;
 
 import java.sql.Connection;
@@ -34,10 +19,13 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * 在它在本地维护了一个容器,用来存放针对每条sql创建出来的statement,下次执行相同的sql时,
+ * 会先检查容器中是否存在相同的sql,如果存在就使用现成的,不再重复获取
  * @author Clinton Begin
  */
 public class ReuseExecutor extends BaseExecutor {
 
+  // key=sql, value=Statement，不同的sql，对应不同的Statement
   private final Map<String, Statement> statementMap = new HashMap<>();
 
   public ReuseExecutor(Configuration configuration, Transaction transaction) {
@@ -81,12 +69,17 @@ public class ReuseExecutor extends BaseExecutor {
     Statement stmt;
     BoundSql boundSql = handler.getBoundSql();
     String sql = boundSql.getSql();
+
+    // sql是key，不同的sql，将产生不同的Statement
     if (hasStatementFor(sql)) {
+
+      // 从statementMap中获取Statement
       stmt = getStatement(sql);
       applyTransactionTimeout(stmt);
     } else {
       Connection connection = getConnection(statementLog);
       stmt = handler.prepare(connection, transaction.getTimeout());
+      // 将Statement放到statementMap中
       putStatement(sql, stmt);
     }
     handler.parameterize(stmt);

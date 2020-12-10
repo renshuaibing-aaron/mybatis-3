@@ -27,7 +27,7 @@ echo "Current commit detected: ${commit_message}"
 # If the version is 1.8, then perform the following actions.
 # 1. Upload artifacts to Sonatype.
 # 2. Use -q option to only display Maven errors and warnings.
-# 3. Use --settings to force the usage of our "settings.xml" file.
+# 3. Use --settings to force the usage of our "settings.annotation" file.
 # 4. Notify Coveralls.
 # 5. Deploy site
 
@@ -44,7 +44,7 @@ if [ $TRAVIS_REPO_SLUG == "mybatis/mybatis-3" ] && [ "$TRAVIS_PULL_REQUEST" == "
 
     # Deploy to site
     # Cannot currently run site this way
-    # ./mvnw site site:deploy -q --settings ./travis/settings.xml
+    # ./mvnw site site:deploy -q --settings ./travis/settings.annotation
     # echo -e "Successfully deploy site under Travis job ${TRAVIS_JOB_NUMBER}"
 
     # Deploy to sonar

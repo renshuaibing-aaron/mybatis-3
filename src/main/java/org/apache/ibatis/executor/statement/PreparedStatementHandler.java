@@ -1,18 +1,3 @@
-/**
- *    Copyright 2009-2018 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.executor.statement;
 
 import java.sql.Connection;
@@ -61,6 +46,8 @@ public class PreparedStatementHandler extends BaseStatementHandler {
   @Override
   public <E> List<E> query(Statement statement, ResultHandler resultHandler) throws SQLException {
     PreparedStatement ps = (PreparedStatement) statement;
+    //直接执行JDBC 的 execute 方法，注意，该对象也被日志对象代理了，做打印日志工作，和清除工作。
+    // 如果方法名称是 “executeQuery” 则返回 ResultSet 并代理该对象。 否则直接执行
     ps.execute();
     return resultSetHandler.handleResultSets(ps);
   }
@@ -72,6 +59,15 @@ public class PreparedStatementHandler extends BaseStatementHandler {
     return resultSetHandler.handleCursorResultSets(ps);
   }
 
+  /**
+   * 有没有很亲切，我们看到我们在刚开始回忆JDBC编程的 connection.prepareStatement 代码，
+   * 由此证明mybatis 就是封装了 JDBC。首先判断是否含有返回主键的功能，
+   * 如果有，则看 keyColumnNames 是否存在，如果不存在，取第一个列为主键。最后执行else 语句，
+   * 开始预编译。注意：此connection 已经被动态代理封装过了，因此会调用 invoke 方法打印日志。最后返回声明处理器对象
+   * @param connection
+   * @return
+   * @throws SQLException
+   */
   @Override
   protected Statement instantiateStatement(Connection connection) throws SQLException {
     String sql = boundSql.getSql();
@@ -80,6 +76,7 @@ public class PreparedStatementHandler extends BaseStatementHandler {
       if (keyColumnNames == null) {
         return connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
       } else {
+
         return connection.prepareStatement(sql, keyColumnNames);
       }
     } else if (mappedStatement.getResultSetType() == ResultSetType.DEFAULT) {

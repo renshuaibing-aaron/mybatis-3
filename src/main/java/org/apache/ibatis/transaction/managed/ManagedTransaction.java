@@ -1,18 +1,3 @@
-/**
- *    Copyright 2009-2017 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.transaction.managed;
 
 import java.sql.Connection;
@@ -25,6 +10,9 @@ import org.apache.ibatis.session.TransactionIsolationLevel;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ *ManagedTransaction让容器来管理事务Transaction的整个生命周期，意思就是说，
+ * 使用ManagedTransaction的commit和rollback功能不会对事务有任何的影响，它什么都不会做，它将事务管理的权利移交给了容器来实现
+ * 基于容器管理事务
  * {@link Transaction} that lets the container manage the full lifecycle of the transaction.
  * Delays connection retrieval until getConnection() is called.
  * Ignores all commit or rollback requests.
@@ -32,6 +20,16 @@ import org.apache.ibatis.transaction.Transaction;
  *
  * @author Clinton Begin
  *
+ * @see ManagedTransactionFactory
+ */
+
+/**
+ *
+ * 让容器管理事务transaction的整个生命周期
+ * connection的获取延迟到getConnection()方法的调用
+ * 忽略所有的commit和rollback操作
+ * 默认情况下，可以关闭一个连接connection，也可以配置它不可以关闭一个连接
+ * 让容器来管理transaction的整个生命周期
  * @see ManagedTransactionFactory
  */
 public class ManagedTransaction implements Transaction {

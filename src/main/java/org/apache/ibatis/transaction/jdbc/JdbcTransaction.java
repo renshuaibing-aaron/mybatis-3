@@ -1,18 +1,3 @@
-/**
- *    Copyright 2009-2019 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.transaction.jdbc;
 
 import java.sql.Connection;
@@ -26,6 +11,7 @@ import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.TransactionException;
 
 /**
+ * JDBC事务 这个本质就是对JDBC事务的封装
  * {@link Transaction} that makes use of the JDBC commit and rollback facilities directly.
  * It relies on the connection retrieved from the dataSource to manage the scope of the transaction.
  * Delays connection retrieval until getConnection() is called.
@@ -39,9 +25,13 @@ public class JdbcTransaction implements Transaction {
 
   private static final Log log = LogFactory.getLog(JdbcTransaction.class);
 
+  //数据库连接
   protected Connection connection;
+  //数据库资源池
   protected DataSource dataSource;
+  //事务的隔离级别
   protected TransactionIsolationLevel level;
+  //事务是否自动提交
   protected boolean autoCommit;
 
   public JdbcTransaction(DataSource ds, TransactionIsolationLevel desiredLevel, boolean desiredAutoCommit) {
@@ -64,10 +54,12 @@ public class JdbcTransaction implements Transaction {
 
   @Override
   public void commit() throws SQLException {
+
     if (connection != null && !connection.getAutoCommit()) {
       if (log.isDebugEnabled()) {
         log.debug("Committing JDBC Connection [" + connection + "]");
       }
+      System.out.println("【*****mybatis原生事务JdbcTransaction事务提交****是否自动提交*】"+connection.getAutoCommit());
       connection.commit();
     }
   }
@@ -84,7 +76,10 @@ public class JdbcTransaction implements Transaction {
 
   @Override
   public void close() throws SQLException {
+    //事务关闭
     if (connection != null) {
+      //重置提交模式  这里为什么要进行重置
+      //jdbc 原生事务 没有关闭的概念 这里底层其实是关闭连接 或者是把数据库连接放进连接池  在放入连接池之前 重置
       resetAutoCommit();
       if (log.isDebugEnabled()) {
         log.debug("Closing JDBC Connection [" + connection + "]");
@@ -132,6 +127,7 @@ public class JdbcTransaction implements Transaction {
   }
 
   protected void openConnection() throws SQLException {
+    System.out.println("【获取数据库连接：事务的隔离级别，事务的自动提交配置】"+connection+level+autoCommit);
     if (log.isDebugEnabled()) {
       log.debug("Opening JDBC Connection");
     }

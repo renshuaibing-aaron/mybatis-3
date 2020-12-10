@@ -1,18 +1,3 @@
-/**
- *    Copyright 2009-2019 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.executor.resultset;
 
 import java.sql.ResultSet;
@@ -36,15 +21,27 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.apache.ibatis.type.UnknownTypeHandler;
 
 /**
+ * 包装器类
  * @author Iwao AVE!
  */
 public class ResultSetWrapper {
-
+  //ResultSet 对象
   private final ResultSet resultSet;
   private final TypeHandlerRegistry typeHandlerRegistry;
+
+  //字段的名字的数组
   private final List<String> columnNames = new ArrayList<>();
+
+  //字段的 Java Type 的数组
   private final List<String> classNames = new ArrayList<>();
+
+  //字段的 JdbcType 的数组
   private final List<JdbcType> jdbcTypes = new ArrayList<>();
+
+  /**
+   *  KEY1：字段的名字
+   *  KEY2：Java 属性类型
+   */
   private final Map<String, Map<Class<?>, TypeHandler<?>>> typeHandlerMap = new HashMap<>();
   private final Map<String, List<String>> mappedColumnNamesMap = new HashMap<>();
   private final Map<String, List<String>> unMappedColumnNamesMap = new HashMap<>();
@@ -55,6 +52,8 @@ public class ResultSetWrapper {
     this.resultSet = rs;
     final ResultSetMetaData metaData = rs.getMetaData();
     final int columnCount = metaData.getColumnCount();
+
+    // <1> 遍历 ResultSetMetaData 的字段们，解析出 columnNames、jdbcTypes、classNames 属性
     for (int i = 1; i <= columnCount; i++) {
       columnNames.add(configuration.isUseColumnLabel() ? metaData.getColumnLabel(i) : metaData.getColumnName(i));
       jdbcTypes.add(JdbcType.forCode(metaData.getColumnType(i)));
@@ -91,13 +90,14 @@ public class ResultSetWrapper {
    * Gets the type handler to use when reading the result set.
    * Tries to get from the TypeHandlerRegistry by searching for the property type.
    * If not found it gets the column JDBC type and tries to get a handler for it.
-   *
+   *获得指定字段名的指定 JavaType 类型的 TypeHandler 对象
    * @param propertyType
    * @param columnName
    * @return
    */
   public TypeHandler<?> getTypeHandler(Class<?> propertyType, String columnName) {
     TypeHandler<?> handler = null;
+    // <1> 先从缓存的 typeHandlerMap 中，获得指定字段名的指定 JavaType 类型的 TypeHandler 对象
     Map<Class<?>, TypeHandler<?>> columnHandlers = typeHandlerMap.get(columnName);
     if (columnHandlers == null) {
       columnHandlers = new HashMap<>();
@@ -105,12 +105,17 @@ public class ResultSetWrapper {
     } else {
       handler = columnHandlers.get(propertyType);
     }
+    // <2> 如果获取不到，则进行查找
     if (handler == null) {
+      // <2> 获得 JdbcType 类型
       JdbcType jdbcType = getJdbcType(columnName);
+      // <2> 获得 TypeHandler 对象
       handler = typeHandlerRegistry.getTypeHandler(propertyType, jdbcType);
       // Replicate logic of UnknownTypeHandler#resolveTypeHandler
       // See issue #59 comment 10
+      // <3> 如果获取不到，则再次进行查找
       if (handler == null || handler instanceof UnknownTypeHandler) {
+        // <3> 使用 classNames 中的类型，进行继续查找 TypeHandler 对象
         final int index = columnNames.indexOf(columnName);
         final Class<?> javaType = resolveClass(classNames.get(index));
         if (javaType != null && jdbcType != null) {
@@ -121,9 +126,11 @@ public class ResultSetWrapper {
           handler = typeHandlerRegistry.getTypeHandler(jdbcType);
         }
       }
+      // <4> 如果获取不到，则使用 ObjectTypeHandler 对象
       if (handler == null || handler instanceof UnknownTypeHandler) {
         handler = new ObjectTypeHandler();
       }
+      // <5> 缓存到 typeHandlerMap 中
       columnHandlers.put(propertyType, handler);
     }
     return handler;

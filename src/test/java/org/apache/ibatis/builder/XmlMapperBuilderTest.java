@@ -189,14 +189,14 @@ class XmlMapperBuilderTest {
     try (InputStream inputStream = Resources.getResourceAsStream(resource)) {
       XMLMapperBuilder builder = new XMLMapperBuilder(inputStream, configuration, resource, configuration.getSqlFragments());
       Exception exception = Assertions.assertThrows(BuilderException.class, builder::parse);
-      Assertions.assertTrue(exception.getMessage().contains("Error parsing Mapper XML. The XML location is 'org/apache/ibatis/builder/ProblemMapper.xml'"));
+      Assertions.assertTrue(exception.getMessage().contains("Error parsing Mapper XML. The XML location is 'org/apache/ibatis/builder/ProblemMapper.annotation'"));
     }
   }
 
 //  @Test
 //  public void shouldNotLoadTheSameNamespaceFromTwoResourcesWithDifferentNames() throws Exception {
 //    Configuration configuration = new Configuration();
-//    String resource = "org/apache/ibatis/builder/AuthorMapper.xml";
+//    String resource = "org/apache/ibatis/builder/AuthorMapper.annotation";
 //    InputStream inputStream = Resources.getResourceAsStream(resource);
 //    XMLMapperBuilder builder = new XMLMapperBuilder(inputStream, configuration, "name1", configuration.getSqlFragments());
 //    builder.parse();

@@ -1,18 +1,3 @@
-/**
- *    Copyright 2009-2019 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.executor;
 
 import java.sql.SQLException;
@@ -33,6 +18,8 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * 这里没有一级缓存  一级缓存在抽象类BaseExecutor 里面
+ * CachingExecutor 在 BaseExecutor 的基础上，实现二级缓存功能
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
@@ -51,6 +38,8 @@ public class CachingExecutor implements Executor {
     return delegate.getTransaction();
   }
 
+  //todo  SqlSession 的 close 方法该方法是事务最后是否生效的关键，当然真正的执行者是executor
+  // 该方法决定了到底是commit 还是rollback，最后执行代理执行器的 close 方法，也就是 SimpleExecutor 的close方法
   @Override
   public void close(boolean forceRollback) {
     try {
@@ -78,8 +67,17 @@ public class CachingExecutor implements Executor {
 
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException {
+    System.out.println("======CachingExecutor#query========");
+    //获取到绑定的sql 这里就是用参数和sql构造成一个参数
     BoundSql boundSql = ms.getBoundSql(parameterObject);
+    System.out.println("======boundSqlboundSql==============="+boundSql);
+
+    //然后调用SimpleExecutor缓存key 创建一级缓存的过程很简单，就是将所有的参数的key或者id构造该 CacheKey 对象，使该对象唯一
+    //一级缓存 缓存的key的内容比较多sql绑定对象，方法声明对象，参数对象，分页对象
     CacheKey key = createCacheKey(ms, parameterObject, rowBounds, boundSql);
+
+
+    //继续执行query()方法
     return query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
   }
 
@@ -92,11 +90,16 @@ public class CachingExecutor implements Executor {
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql)
       throws SQLException {
+    //首先获取缓存   todo 这个是什么缓存？？
     Cache cache = ms.getCache();
+    System.out.println("===========获取二级缓存=================="+cache);
     if (cache != null) {
+      //是否需要清空缓存
       flushCacheIfRequired(ms);
+
       if (ms.isUseCache() && resultHandler == null) {
         ensureNoOutParams(ms, boundSql);
+
         @SuppressWarnings("unchecked")
         List<E> list = (List<E>) tcm.getObject(cache, key);
         if (list == null) {
@@ -106,6 +109,7 @@ public class CachingExecutor implements Executor {
         return list;
       }
     }
+    //缓存没有 执行代理执行器的query方法
     return delegate.query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
   }
 

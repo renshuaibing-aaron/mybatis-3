@@ -1,0 +1,11 @@
+1.mybatis中有哪些设计模式？
+建造者模式(builder模式)
+工厂模式
+单例模式
+代理模式
+组合模式
+模板方法模式
+适配器模式
+装饰者模式
+迭代器模式
+https://mp.weixin.qq.com/s?__biz=MzU2Njg3OTU1Mg==&mid=2247485242&idx=1&sn=446ddba93198730d5c257d2f0220e637&chksm=fca4f315cbd37a03acb79bed91973b99dd628dc2353618caad0b58f1a7d75530509e1007e7ad&scene=27#wechat_redirect

@@ -1,15 +1,17 @@
-package com.aaron.ren.spring;
+package com.aaron.ren.spring.annotation;
 
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import javax.sql.DataSource;
 
 @Configuration
-@MapperScan("com.aaron.ren.spring")//扫描mapper
+@MapperScan("com.aaron.ren.spring.annotation")//扫描mapper
+@ComponentScan("com.aaron.ren.spring.annotation") //这两个不同
 public class AppConfig {
 
   /**
@@ -20,9 +22,9 @@ public class AppConfig {
   public DataSource getDataSource(){
     DriverManagerDataSource dataSource = new DriverManagerDataSource();
     dataSource.setDriverClassName("com.mysql.jdbc.Driver");
-    dataSource.setUrl("jdbc:mysql://localhost:3306/mybatis?characterEncoding=utf-8&useSSL=false&serverTimezone=UTC");
+    dataSource.setUrl("jdbc:mysql://10.1.168.56:3306/activity?useUnicode=true&characterEncoding=utf-8");
     dataSource.setUsername("root");
-    dataSource.setPassword("123456");
+    dataSource.setPassword("Abc12345");
     return dataSource;
   }
 

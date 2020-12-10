@@ -1,18 +1,3 @@
-/**
- *    Copyright 2009-2019 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.cache.impl;
 
 import java.util.HashMap;
@@ -22,12 +7,21 @@ import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.cache.CacheException;
 
 /**
+ * 一级缓存叫localCache,它的封装类叫PerpetualCache 里面维护了一个String 类型的id, 和一个hashMap
+ * 取名字也很讲究,perpetual意味永不间断,事实上确实如此,一级缓存默认存在,
+ * 也关不了(至少我真的不知道),但是在与Spring整合时,Spring把这个缓存给关了,这并不奇怪,因为spring 直接干掉了这个sqlSession
  * @author Clinton Begin
  */
 public class PerpetualCache implements Cache {
 
+  /**
+   * 标识
+   */
   private final String id;
 
+  /**
+   * 缓存容器
+   */
   private Map<Object, Object> cache = new HashMap<>();
 
   public PerpetualCache(String id) {

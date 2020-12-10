@@ -1,18 +1,3 @@
-/**
- *    Copyright 2009-2019 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.session.defaults;
 
 import java.sql.Connection;
@@ -44,6 +29,7 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
 
   @Override
   public SqlSession openSession() {
+   //参数中 configuration 获取了默认的执行器 “SIMPLE”，自动提交我们没有配置，默认是false
     return openSessionFromDataSource(configuration.getDefaultExecutorType(), null, false);
   }
 
@@ -87,13 +73,32 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     return configuration;
   }
 
+  /**
+   * 最牛逼的方法  执行器类型 事务的隔离级别 null  自动提交false
+   * @param execType
+   * @param level
+   * @param autoCommit
+   * @return
+   */
   private SqlSession openSessionFromDataSource(ExecutorType execType, TransactionIsolationLevel level, boolean autoCommit) {
     Transaction tx = null;
     try {
+      //获取配置文件中的环境，也就是我们配置的 <environments default="development">标签
       final Environment environment = configuration.getEnvironment();
+
+      //根据环境获取事务工厂 ，然后下面的代码是根据事务工厂创建一个事务对象  这个会创建一个JDBC的事务工厂
       final TransactionFactory transactionFactory = getTransactionFactoryFromEnvironment(environment);
+
+      //通过事务工厂实例化了一个事物Transaction,那么问题来了,这个Transaction又是什么呢?
+      // 注释是这么解释的: Transaction 包装了一个数据库的连接,处理这个连接的生命周期,包含: 它的创建,准备 提交/回滚 和 关闭
       tx = transactionFactory.newTransaction(environment.getDataSource(), level, autoCommit);
+
+
+      //configurationye 则会根据事务对象和执行器类型创建一个执行器
+      //默认创建的是CachingExecutor它维护了一个SimpleExecutor, 这个执行器的特点是 在每次执行完成后都会关闭 statement 对象
       final Executor executor = configuration.newExecutor(tx, execType);
+
+      //最后返回一个默认的 DefaultSqlSession 对象
       return new DefaultSqlSession(configuration, executor, autoCommit);
     } catch (Exception e) {
       closeTransaction(tx); // may have fetched a connection so lets call close()
@@ -126,9 +131,12 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
   }
 
   private TransactionFactory getTransactionFactoryFromEnvironment(Environment environment) {
+
+    // 情况一，创建 ManagedTransactionFactory 对象
     if (environment == null || environment.getTransactionFactory() == null) {
       return new ManagedTransactionFactory();
     }
+    // 情况二，使用 `environment` 中的
     return environment.getTransactionFactory();
   }
 

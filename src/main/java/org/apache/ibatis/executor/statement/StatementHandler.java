@@ -1,18 +1,3 @@
-/**
- *    Copyright 2009-2016 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.executor.statement;
 
 import java.sql.Connection;
@@ -26,19 +11,23 @@ import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.session.ResultHandler;
 
 /**
+ * 首先通过 ParameterHandler 完成 SQL 语句的实参绑定，
+ * 然后通过 java.sql.Statement 对象执行 SQL 语句并得到结果集，最后通过 ResultSetHandler 完成结果集的映射，得到结果对象并返回
  * @author Clinton Begin
  */
 public interface StatementHandler {
 
+  // sql预编译, 构建statement对象
   Statement prepare(Connection connection, Integer transactionTimeout)
       throws SQLException;
 
+  //// 对prepare方法构建的预编译的sql进行参数的设置
   void parameterize(Statement statement)
       throws SQLException;
-
+  // 批量处理器
   void batch(Statement statement)
       throws SQLException;
-
+  // create update delete
   int update(Statement statement)
       throws SQLException;
 
@@ -47,9 +36,9 @@ public interface StatementHandler {
 
   <E> Cursor<E> queryCursor(Statement statement)
       throws SQLException;
-
+  // 获取sql的封装对象
   BoundSql getBoundSql();
-
+  // 获取参数处理对象
   ParameterHandler getParameterHandler();
 
 }

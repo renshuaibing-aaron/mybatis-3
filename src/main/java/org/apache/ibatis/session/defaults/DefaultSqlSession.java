@@ -1,18 +1,3 @@
-/**
- *    Copyright 2009-2019 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.session.defaults;
 
 import java.io.IOException;
@@ -40,6 +25,7 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 
 /**
+ * 线程不安全
  * The default implementation for {@link SqlSession}.
  * Note that this class is not Thread-Safe.
  *
@@ -49,9 +35,17 @@ public class DefaultSqlSession implements SqlSession {
 
   private final Configuration configuration;
   private final Executor executor;
-
+  /**
+   * 是否自动提交事务
+   */
   private final boolean autoCommit;
+  /**
+   * 是否发生数据变更
+   */
   private boolean dirty;
+  /**
+   * Cursor 数组
+   */
   private List<Cursor<?>> cursorList;
 
   public DefaultSqlSession(Configuration configuration, Executor executor, boolean autoCommit) {
@@ -70,6 +64,14 @@ public class DefaultSqlSession implements SqlSession {
     return this.selectOne(statement, null);
   }
 
+  /**
+   * 第一个参数:"com.aaron.ren.normal.UserMapper.getUser"
+   * 第二个参数：1
+   * @param statement Unique identifier matching the statement to use.
+   * @param parameter A parameter object to pass to the statement.
+   * @param <T>
+   * @return
+   */
   @Override
   public <T> T selectOne(String statement, Object parameter) {
     // Popular vote was to return null on 0 results and throw exception on too many.
@@ -77,6 +79,8 @@ public class DefaultSqlSession implements SqlSession {
     if (list.size() == 1) {
       return list.get(0);
     } else if (list.size() > 1) {
+
+      //todo  常见的异常
       throw new TooManyResultsException("Expected one result (or null) to be returned by selectOne(), but found: " + list.size());
     } else {
       return null;
@@ -135,15 +139,24 @@ public class DefaultSqlSession implements SqlSession {
     return this.selectList(statement, null);
   }
 
+  //statement = "com.aaron.ren.normal.getUser" parameter=null
   @Override
   public <E> List<E> selectList(String statement, Object parameter) {
+    //key  map  默认的分页对象 mybatis是假分页 即一次返回所有到内存中，再进行提取，如果数据过多，可能引起OOM
     return this.selectList(statement, parameter, RowBounds.DEFAULT);
   }
 
   @Override
   public <E> List<E> selectList(String statement, Object parameter, RowBounds rowBounds) {
     try {
+      //它是一个对象,维护了很多很多的配置信息,但是我们关心它里面的两条信息,这其实可以理解成一种方法与sql之间的映射
+      //statement 本质是个key 在xml里面我们有类名+id 可以唯一确认一个sql
+      //这里是获取一个xml的节点
       MappedStatement ms = configuration.getMappedStatement(statement);
+
+      System.out.println("=====MappedStatement==========="+ms.getCache());
+      //默认的执行器 Executor是CachingExecutor  todo 这里为什么呢  开启二级缓存 二级缓存开启会构造一个CachingExecutor
+      //映射声明 包装过的参数对象 分页对象
       return executor.query(ms, wrapCollection(parameter), rowBounds, Executor.NO_RESULT_HANDLER);
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error querying database.  Cause: " + e, e);
@@ -194,6 +207,8 @@ public class DefaultSqlSession implements SqlSession {
     try {
       dirty = true;
       MappedStatement ms = configuration.getMappedStatement(statement);
+
+      //update方法也是委托给了Executor执行
       return executor.update(ms, wrapCollection(parameter));
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error updating database.  Cause: " + e, e);
@@ -260,6 +275,7 @@ public class DefaultSqlSession implements SqlSession {
   @Override
   public void close() {
     try {
+
       executor.close(isCommitOrRollbackRequired(false));
       closeCursors();
       dirty = false;
@@ -289,6 +305,7 @@ public class DefaultSqlSession implements SqlSession {
   @Override
   public <T> T getMapper(Class<T> type) {
     //获取代理对象
+    //
     return configuration.getMapper(type, this);
   }
 
@@ -317,6 +334,11 @@ public class DefaultSqlSession implements SqlSession {
     return (!autoCommit && dirty) || force;
   }
 
+  /**
+   * 对参数进行包装
+   * @param object
+   * @return
+   */
   private Object wrapCollection(final Object object) {
     if (object instanceof Collection) {
       StrictMap<Object> map = new StrictMap<>();

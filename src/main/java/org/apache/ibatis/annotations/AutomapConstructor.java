@@ -22,7 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * The marker annotation that indicate a constructor for automatic mapping.
+ * The marker xmltype that indicate a constructor for automatic mapping.
  *
  * @author Tim Chen
  * @since 3.4.3

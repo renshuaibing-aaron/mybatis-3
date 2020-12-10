@@ -426,11 +426,11 @@ class SqlSessionTest extends BaseDataTest {
       MappedStatement ms = new MappedStatement.Builder(config,
           "org.apache.ibatis.domain.blog.mappers.BlogMapper.selectBlogWithPostsUsingSubSelect",
           Mockito.mock(SqlSource.class), SqlCommandType.SELECT)
-              .resource("org/mybatis/TestMapper.xml").build();
+              .resource("org/mybatis/TestMapper.annotation").build();
       config.addMappedStatement(ms);
       fail("Expected exception to be thrown due to statement that already exists.");
     } catch (Exception e) {
-      assertTrue(e.getMessage().contains("already contains value for org.apache.ibatis.domain.blog.mappers.BlogMapper.selectBlogWithPostsUsingSubSelect. please check org/apache/ibatis/builder/BlogMapper.xml and org/mybatis/TestMapper.xml"));
+      assertTrue(e.getMessage().contains("already contains value for org.apache.ibatis.domain.blog.mappers.BlogMapper.selectBlogWithPostsUsingSubSelect. please check org/apache/ibatis/builder/BlogMapper.annotation and org/mybatis/TestMapper.annotation"));
     }
   }
 
@@ -441,11 +441,11 @@ class SqlSessionTest extends BaseDataTest {
       MappedStatement ms = new MappedStatement.Builder(config,
           "org.apache.ibatis.domain.blog.mappers.AuthorMapper.selectAuthor2",
           Mockito.mock(SqlSource.class), SqlCommandType.SELECT)
-              .resource("org/mybatis/TestMapper.xml").build();
+              .resource("org/mybatis/TestMapper.annotation").build();
       config.addMappedStatement(ms);
       fail("Expected exception to be thrown due to statement that already exists.");
     } catch (Exception e) {
-      assertTrue(e.getMessage().contains("already contains value for org.apache.ibatis.domain.blog.mappers.AuthorMapper.selectAuthor2. please check org/apache/ibatis/domain/blog/mappers/AuthorMapper.java (best guess) and org/mybatis/TestMapper.xml"));
+      assertTrue(e.getMessage().contains("already contains value for org.apache.ibatis.domain.blog.mappers.AuthorMapper.selectAuthor2. please check org/apache/ibatis/domain/blog/mappers/AuthorMapper.java (best guess) and org/mybatis/TestMapper.annotation"));
     }
   }
 

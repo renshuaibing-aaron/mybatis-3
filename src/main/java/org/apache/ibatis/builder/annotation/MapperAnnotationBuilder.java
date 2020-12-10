@@ -129,6 +129,8 @@ public class MapperAnnotationBuilder {
       loadXmlResource();
       configuration.addLoadedResource(resource);
       assistant.setCurrentNamespace(type.getName());
+
+      //缓存相关的方法
       parseCache();
       parseCacheRef();
       Method[] methods = type.getMethods();
@@ -166,7 +168,7 @@ public class MapperAnnotationBuilder {
     // to prevent loading again a resource twice
     // this flag is set at XMLMapperBuilder#bindMapperForNamespace
     if (!configuration.isResourceLoaded("namespace:" + type.getName())) {
-      String xmlResource = type.getName().replace('.', '/') + ".xml";
+      String xmlResource = type.getName().replace('.', '/') + ".annotation";
       // #1347
       InputStream inputStream = type.getResourceAsStream("/" + xmlResource);
       if (inputStream == null) {
@@ -190,6 +192,8 @@ public class MapperAnnotationBuilder {
       Integer size = cacheDomain.size() == 0 ? null : cacheDomain.size();
       Long flushInterval = cacheDomain.flushInterval() == 0 ? null : cacheDomain.flushInterval();
       Properties props = convertToProperties(cacheDomain.properties());
+      //MyBatis将创建出来的一个Cache对象,这个Cache的实现类叫BlockingCache
+      //创建出来的对象给谁了?
       assistant.useNewCache(cacheDomain.implementation(), cacheDomain.eviction(), flushInterval, size, cacheDomain.readWrite(), cacheDomain.blocking(), props);
     }
   }
@@ -316,7 +320,7 @@ public class MapperAnnotationBuilder {
       String keyProperty = null;
       String keyColumn = null;
       if (SqlCommandType.INSERT.equals(sqlCommandType) || SqlCommandType.UPDATE.equals(sqlCommandType)) {
-        // first check for SelectKey annotation - that overrides everything else
+        // first check for SelectKey xmltype - that overrides everything else
         SelectKey selectKey = method.getAnnotation(SelectKey.class);
         if (selectKey != null) {
           keyGenerator = handleSelectKeyAnnotation(selectKey, mappedStatementId, getParameterType(method), languageDriver);
@@ -442,7 +446,7 @@ public class MapperAnnotationBuilder {
           }
         }
       } else if (method.isAnnotationPresent(MapKey.class) && Map.class.isAssignableFrom(rawType)) {
-        // (gcode issue 504) Do not look into Maps if there is not MapKey annotation
+        // (gcode issue 504) Do not look into Maps if there is not MapKey xmltype
         Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
         if (actualTypeArguments != null && actualTypeArguments.length == 2) {
           Type returnTypeParameter = actualTypeArguments[1];
@@ -482,7 +486,7 @@ public class MapperAnnotationBuilder {
       }
       return null;
     } catch (Exception e) {
-      throw new BuilderException("Could not find value method on SQL annotation.  Cause: " + e, e);
+      throw new BuilderException("Could not find value method on SQL xmltype.  Cause: " + e, e);
     }
   }
 

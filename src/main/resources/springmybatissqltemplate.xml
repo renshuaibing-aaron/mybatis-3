@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+      http://www.springframework.org/schema/beans/spring-beans.xsd
+      http://www.springframework.org/schema/aop
+      http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+  <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+    <property name="url" value="jdbc:mysql://10.1.168.56:3306/activity?useUnicode=true"/>
+    <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+    <property name="username" value="root"/>
+    <property name="password" value="Abc12345"/>
+  </bean>
+
+
+  <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+    <property name="dataSource" ref="dataSource" />
+    <property name="configLocation" value="mybatis-config2.xml" />
+  </bean>
+
+  <!--配置sqlSessionTemplate：通过带参数的构造方法创建对象 -->
+  <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+    <!-- 以sqlSessionFactory为参数传入构造函数中 -->
+    <constructor-arg ref="sqlSessionFactory" />
+    <!-- mybatis执行器，取值范围是SIMPLE/REUSE/BATCH三种类型 -->
+    <constructor-arg value="BATCH" />
+  </bean>
+
+</beans>

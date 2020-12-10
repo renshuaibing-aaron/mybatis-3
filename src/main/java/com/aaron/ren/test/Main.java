@@ -1,39 +1,48 @@
+/*
 package com.aaron.ren.test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 
 public class Main {
   public static void main(String[] args) {
-    int[] a = new int[]{2, 5, 7, 1, 3, 6};
-    String[] b = new String[a.length];
+    List<Student> list=new ArrayList<>();
+    list.add(new Student("a",1));
+    list.add(new Student("b",2));
+    list.add(new Student("c",3));
+    list.add(new Student("d",4));
 
-    for (int i = 0; i < a.length; i++) {
-      int rightAns = 0;
-      int sumLeft = creatSumLeft(a, i);
-
-      for (int n = i + 1; n < a.length; n++) {
-        rightAns = rightAns + a[n];
-        if (sumLeft <= rightAns) {
-          break;
-        }
-      }
-      if (sumLeft <= rightAns) {
-        b[i] = "L";
-      } else {
-        b[i] = "R";
-      }
-    }
-
-    for (int i = 0; i < b.length; i++) {
-      System.out.println(b[i]);
-    }
+    Stream<String> stringStream = list.stream().map(user -> "nihao").collect();
+    System.out.println();
 
 
   }
 
-  private static int creatSumLeft(int[] a, int i) {
-    int sumLeft = 0;
-    for (int m = i - 1; m >= 0; m--) {
-      sumLeft = sumLeft + a[m];
+  private static class Student {
+    public String getName() {
+      return name;
     }
-    return sumLeft;
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public int getAge() {
+      return age;
+    }
+
+    public void setAge(int age) {
+      this.age = age;
+    }
+
+    private String  name;
+    private int  age;
+
+    public Student(String a, int i) {
+      name=a;
+      age=i;
+    }
   }
 }
+*/

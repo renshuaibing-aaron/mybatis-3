@@ -266,7 +266,7 @@ public class OurSqlBuilder {
     }
     if (columnMap.size() == 0) {
       throw new RuntimeException("There is no field in the class [" + entityClass.getCanonicalName()
-          + "] that specifies the @BaseMapper.Column annotation.");
+          + "] that specifies the @BaseMapper.Column xmltype.");
     }
     return columnMap;
   }
@@ -310,7 +310,7 @@ public class OurSqlBuilder {
       sqlBuffer.append("</if>");
     }
     sqlBuffer.append("</set>");
-    // For simplicity, there is no @Id annotation here, using default id directly
+    // For simplicity, there is no @Id xmltype here, using default id directly
     sqlBuffer.append("where id = #{id}");
     sqlBuffer.append("</script>");
     return sqlBuffer.toString();

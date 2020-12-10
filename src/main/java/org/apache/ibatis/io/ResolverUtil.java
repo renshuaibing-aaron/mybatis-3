@@ -27,7 +27,7 @@ import org.apache.ibatis.logging.LogFactory;
 /**
  * <p>ResolverUtil is used to locate classes that are available in the/a class path and meet
  * arbitrary conditions. The two most common conditions are that a class implements/extends
- * another class, or that is it annotated with a specific annotation. However, through the use
+ * another class, or that is it annotated with a specific xmltype. However, through the use
  * of the {@link Test} class it is possible to search using arbitrary conditions.</p>
  *
  * <p>A ClassLoader is used to locate all locations (directories and jar files) in the class
@@ -42,7 +42,7 @@ import org.apache.ibatis.logging.LogFactory;
  * a package name and a Test instance. This will cause the named package <b>and all sub-packages</b>
  * to be scanned for classes that meet the test. There are also utility methods for the common
  * use cases of scanning multiple packages for extensions of particular classes, or classes
- * annotated with a specific annotation.</p>
+ * annotated with a specific xmltype.</p>
  *
  * <p>The standard usage pattern for the ResolverUtil class is as follows:</p>
  *
@@ -99,13 +99,13 @@ public class ResolverUtil<T> {
   }
 
   /**
-   * A Test that checks to see if each class is annotated with a specific annotation. If it
+   * A Test that checks to see if each class is annotated with a specific xmltype. If it
    * is, then the test returns true, otherwise false.
    */
   public static class AnnotatedWith implements Test {
     private Class<? extends Annotation> annotation;
 
-    /** Constructs an AnnotatedWith test for the specified annotation type. */
+    /** Constructs an AnnotatedWith test for the specified xmltype type. */
     public AnnotatedWith(Class<? extends Annotation> annotation) {
       this.annotation = annotation;
     }
@@ -184,10 +184,10 @@ public class ResolverUtil<T> {
   }
 
   /**
-   * Attempts to discover classes that are annotated with the annotation. Accumulated
+   * Attempts to discover classes that are annotated with the xmltype. Accumulated
    * classes can be accessed by calling {@link #getClasses()}.
    *
-   * @param annotation the annotation that should be present on matching classes
+   * @param annotation the xmltype that should be present on matching classes
    * @param packageNames one or more package names to scan (including subpackages) for classes
    */
   public ResolverUtil<T> findAnnotated(Class<? extends Annotation> annotation, String... packageNames) {

@@ -1,5 +1,8 @@
 package org.apache.ibatis.binding;
 
+import org.apache.ibatis.reflection.ExceptionUtil;
+import org.apache.ibatis.session.SqlSession;
+
 import java.io.Serializable;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -9,10 +12,8 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-import org.apache.ibatis.reflection.ExceptionUtil;
-import org.apache.ibatis.session.SqlSession;
-
 /**
+ * 动态代理的需要的InvoketionHandler
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
@@ -23,8 +24,14 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
       | MethodHandles.Lookup.PACKAGE | MethodHandles.Lookup.PUBLIC;
   private static final Constructor<Lookup> lookupConstructor;
   private static final Method privateLookupInMethod;
+
+
   private final SqlSession sqlSession;
+
+
   private final Class<T> mapperInterface;
+
+
   private final Map<Method, MapperMethod> methodCache;
 
   public MapperProxy(SqlSession sqlSession, Class<T> mapperInterface, Map<Method, MapperMethod> methodCache) {
@@ -59,14 +66,27 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
     lookupConstructor = lookup;
   }
 
+  /**
+   * 该方法首先判断方法的class 是否继承 Object ，如果是，就不使用代理，直接执行，如果该方法是默认的，
+   * 那么就执行默认方法（该方法是针对Java7以上版本对动态类型语言的支持，不进行详述）。
+   * 我们这里肯定不是，执行下面的 cachedMapperMethod 方法 并调用返回对象 MapperMethod 的execute 方法
+   * @param proxy
+   * @param method
+   * @param args
+   * @return
+   * @throws Throwable
+   */
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     //核心代理方法
     try {
+      // <1> 如果是 Object 定义的方法，直接调用
       if (Object.class.equals(method.getDeclaringClass())) {
 
         //首先判断方法的class 是否继承 Object ，如果是，就不使用代理
         return method.invoke(this, args);
+
+        //todo 这里是啥玩意？ 什么是default方法？
       } else if (method.isDefault()) {
         if (privateLookupInMethod == null) {
           return invokeDefaultMethodJava8(proxy, method, args);
@@ -77,13 +97,16 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
     } catch (Throwable t) {
       throw ExceptionUtil.unwrapThrowable(t);
     }
+
+    // <3.1> 获得 MapperMethod 对象
     final MapperMethod mapperMethod = cachedMapperMethod(method);
+
+    // <3.2> 执行 MapperMethod 方法
     return mapperMethod.execute(sqlSession, args);
   }
 
   private MapperMethod cachedMapperMethod(Method method) {
-    return methodCache.computeIfAbsent(method,
-        k -> new MapperMethod(mapperInterface, method, sqlSession.getConfiguration()));
+    return methodCache.computeIfAbsent(method, k -> new MapperMethod(mapperInterface, method, sqlSession.getConfiguration()));
   }
 
   private Object invokeDefaultMethodJava9(Object proxy, Method method, Object[] args)

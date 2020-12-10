@@ -1,21 +1,7 @@
-/**
- *    Copyright 2009-2019 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.mapping;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,6 +15,7 @@ import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * 这个是什么东西 ？ 每个方法都是一个MappedStatement ？
  * @author Clinton Begin
  */
 public final class MappedStatement {
@@ -41,10 +28,13 @@ public final class MappedStatement {
   private StatementType statementType;
   private ResultSetType resultSetType;
   private SqlSource sqlSource;
+
+  //缓存相关 这里存放的二级缓存  什么时间放进去的？？
   private Cache cache;
   private ParameterMap parameterMap;
   private List<ResultMap> resultMaps;
   private boolean flushCacheRequired;
+
   private boolean useCache;
   private boolean resultOrdered;
   private SqlCommandType sqlCommandType;
@@ -60,6 +50,8 @@ public final class MappedStatement {
   MappedStatement() {
     // constructor disabled
   }
+
+
 
   public static class Builder {
     private MappedStatement mappedStatement = new MappedStatement();
@@ -296,6 +288,8 @@ public final class MappedStatement {
   public BoundSql getBoundSql(Object parameterObject) {
     BoundSql boundSql = sqlSource.getBoundSql(parameterObject);
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
+
+
     if (parameterMappings == null || parameterMappings.isEmpty()) {
       boundSql = new BoundSql(configuration, boundSql.getSql(), parameterMap.getParameterMappings(), parameterObject);
     }
@@ -320,6 +314,36 @@ public final class MappedStatement {
     } else {
       return in.split(",");
     }
+  }
+
+
+  @Override
+  public String toString() {
+    return "MappedStatement{" +
+      "resource='" + resource + '\'' +
+      ", configuration=" + configuration +
+      ", id='" + id + '\'' +
+      ", fetchSize=" + fetchSize +
+      ", timeout=" + timeout +
+      ", statementType=" + statementType +
+      ", resultSetType=" + resultSetType +
+      ", sqlSource=" + sqlSource +
+      ", cache=" + cache +
+      ", parameterMap=" + parameterMap +
+      ", resultMaps=" + resultMaps +
+      ", flushCacheRequired=" + flushCacheRequired +
+      ", useCache=" + useCache +
+      ", resultOrdered=" + resultOrdered +
+      ", sqlCommandType=" + sqlCommandType +
+      ", keyGenerator=" + keyGenerator +
+      ", keyProperties=" + Arrays.toString(keyProperties) +
+      ", keyColumns=" + Arrays.toString(keyColumns) +
+      ", hasNestedResultMaps=" + hasNestedResultMaps +
+      ", databaseId='" + databaseId + '\'' +
+      ", statementLog=" + statementLog +
+      ", lang=" + lang +
+      ", resultSets=" + Arrays.toString(resultSets) +
+      '}';
   }
 
 }

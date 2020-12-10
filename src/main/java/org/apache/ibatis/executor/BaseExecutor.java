@@ -1,18 +1,3 @@
-/**
- *    Copyright 2009-2019 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.executor;
 
 import static org.apache.ibatis.executor.ExecutionPlaceholder.EXECUTION_PLACEHOLDER;
@@ -45,6 +30,7 @@ import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
+ * 实现了Executor的全部方法,包括对缓存,事务,连接提供了一系列的模板方法, 这些模板方法中留出来了四个抽象的方法等待子类去实现
  * @author Clinton Begin
  */
 public abstract class BaseExecutor implements Executor {
@@ -55,7 +41,13 @@ public abstract class BaseExecutor implements Executor {
   protected Executor wrapper;
 
   protected ConcurrentLinkedQueue<DeferredLoad> deferredLoads;
+  //著名的一级缓存
+  //为什么大家会说一级缓存是属于SqlSession的啊,诸如此类的话就是从这个看源码的过程中的出来的结果,如果你觉的印象不深刻,我就接着补刀,
+  // 每次和数据库打交道都的先创建sqlSession,
+  // 创建sqlSession的方法会在创建出DefaultSqlSession之前,先为它创建一个Executor,而我们说的一级缓存就是这个Executor的属性
   protected PerpetualCache localCache;
+
+
   protected PerpetualCache localOutputParameterCache;
   protected Configuration configuration;
 
@@ -80,6 +72,14 @@ public abstract class BaseExecutor implements Executor {
     return transaction;
   }
 
+  /**
+   * 首先执行rollback方法，该方法内部主要是清除缓存，校验是否清除 Statements。
+   * 然后执行 transaction.close()方法，重置事务（重置事务的autoCommit 属性为true），
+   * 最后调用 connection.close() 方法，和我们JDBC 一样，关闭连接，但实际上，该connection 被代理了，
+   * 被 PooledConnection 连接池代理了，在该代理的invoke方法中，会将该connection从连接池集合删除，在创建一个新的连接放在集合中。
+   * 最后回到 SimpleExecurtor 的 close 方法中，在执行完事务的close 方法后，在finally块中将所有应用置为null，等待GC回收。清除工作也就完毕了
+   * @param forceRollback
+   */
   @Override
   public void close(boolean forceRollback) {
     try {
@@ -113,6 +113,7 @@ public abstract class BaseExecutor implements Executor {
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
+    //清空一级缓存
     clearLocalCache();
     return doUpdate(ms, parameter);
   }
@@ -131,6 +132,8 @@ public abstract class BaseExecutor implements Executor {
 
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException {
+
+    System.out.println("=========== 走到这个分支说明没有用二级缓存==============");
     BoundSql boundSql = ms.getBoundSql(parameter);
     CacheKey key = createCacheKey(ms, parameter, rowBounds, boundSql);
     return query(ms, parameter, rowBounds, resultHandler, key, boundSql);
@@ -140,19 +143,27 @@ public abstract class BaseExecutor implements Executor {
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql) throws SQLException {
     ErrorContext.instance().resource(ms.getResource()).activity("executing a query").object(ms.getId());
+    //1.首先判断执行器状态是否关闭。
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
+
+    //判断是否需要清除缓存。
     if (queryStack == 0 && ms.isFlushCacheRequired()) {
       clearLocalCache();
     }
     List<E> list;
     try {
       queryStack++;
+      //这里是一级缓存
+      //这里会出现线程不安全的？
       list = resultHandler == null ? (List<E>) localCache.getObject(key) : null;
+
+      System.out.println("=========从一级缓存里面查找================"+list);
       if (list != null) {
         handleLocallyCachedOutputParameters(ms, key, parameter, boundSql);
       } else {
+        //查不到的话，就从数据库查，在queryFromDatabase中，会对localcache进行写入。
         list = queryFromDatabase(ms, parameter, rowBounds, resultHandler, key, boundSql);
       }
     } finally {
@@ -164,6 +175,7 @@ public abstract class BaseExecutor implements Executor {
       }
       // issue #601
       deferredLoads.clear();
+      //todo  判断一级缓存级别是否是STATEMENT级别，如果是的话，就清空缓存，这也就是STATEMENT级别的一级缓存无法共享localCache的原因
       if (configuration.getLocalCacheScope() == LocalCacheScope.STATEMENT) {
         // issue #482
         clearLocalCache();
@@ -280,6 +292,7 @@ public abstract class BaseExecutor implements Executor {
       throws SQLException;
 
   protected void closeStatement(Statement statement) {
+    //关闭 Statement 等操作
     if (statement != null) {
       try {
         statement.close();
@@ -317,6 +330,18 @@ public abstract class BaseExecutor implements Executor {
     }
   }
 
+  /**
+   * 一级缓存的值被填充
+   * @param ms
+   * @param parameter
+   * @param rowBounds
+   * @param resultHandler
+   * @param key
+   * @param boundSql
+   * @param <E>
+   * @return
+   * @throws SQLException
+   */
   private <E> List<E> queryFromDatabase(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql) throws SQLException {
     List<E> list;
     localCache.putObject(key, EXECUTION_PLACEHOLDER);
@@ -325,6 +350,7 @@ public abstract class BaseExecutor implements Executor {
     } finally {
       localCache.removeObject(key);
     }
+    //添加一级缓存
     localCache.putObject(key, list);
     if (ms.getStatementType() == StatementType.CALLABLE) {
       localOutputParameterCache.putObject(key, parameter);
@@ -333,6 +359,8 @@ public abstract class BaseExecutor implements Executor {
   }
 
   protected Connection getConnection(Log statementLog) throws SQLException {
+
+    //从事务管理器中获取连接器（该方法中还需要设置是否自动提交，隔离级别）。如果我们的事务日志是debug级别，则创建一个日志代理对象，代理Connection
     Connection connection = transaction.getConnection();
     if (statementLog.isDebugEnabled()) {
       return ConnectionLogger.newInstance(connection, statementLog, queryStack);

@@ -22,7 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * The maker annotation that invoke a flush statements via Mapper interface.
+ * The maker xmltype that invoke a flush statements via Mapper interface.
  *
  * @since 3.3.0
  * @author Kazuki Shimizu

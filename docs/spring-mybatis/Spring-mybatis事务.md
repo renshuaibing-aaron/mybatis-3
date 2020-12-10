@@ -1,0 +1,10 @@
+1.学习spring-mabatis的事务机制 需要了解spring 事务，mybatis事务
+mybatis 原成是支持事务的 默认设置为非自动提交
+但是我们知道spring-mabatis结合后 抛弃了原生那一套
+SpringManagedTransactionFactory -->SpringManagedTransaction  注意和原生mybatis的区别
+SpringManagedTransaction 这里面获取事务 又和spring 事务机制联合起来 spring-mabatis并没有单独写一个 事务管理器 
+用的还是DataSourceTransactionManager  这个事务管理器
+
+2.public class SpringManagedTransaction implements Transaction  
+
+public class SpringManagedTransactionFactory implements TransactionFactory

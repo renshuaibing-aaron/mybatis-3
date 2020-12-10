@@ -40,7 +40,7 @@
 	</environments>
 
 	<mappers>
-<!-- 		<mapper resource="org/apache/ibatis/submitted/inheritance/UserAccountMapper.xml" /> -->
+<!-- 		<mapper resource="org/apache/ibatis/submitted/inheritance/UserAccountMapper.annotation" /> -->
         <mapper class="org.apache.ibatis.submitted.inheritance.UserProfileMapper" />
 	</mappers>
 

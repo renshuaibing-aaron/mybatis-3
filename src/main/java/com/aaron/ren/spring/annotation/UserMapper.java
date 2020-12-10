@@ -1,4 +1,4 @@
-package com.aaron.ren.spring;
+package com.aaron.ren.spring.annotation;
 
 import org.apache.ibatis.annotations.Select;
 
@@ -7,5 +7,5 @@ import java.util.Map;
 
 public interface UserMapper {
   @Select("select * from user")
-  List<Map<String,String>> findAll();
+  List<Map<String,String>> getAllUser();
 }

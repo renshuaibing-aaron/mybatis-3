@@ -74,6 +74,8 @@ public class GenericTokenParser {
           builder.append(src, start, src.length - start);
           offset = src.length;
         } else {
+
+          //注意此处如果匹配到 #{ + } 对后，会调用 ParameterMappingTokenHandler 对应的 #handleToken(String content) 方法
           builder.append(handler.handleToken(expression.toString()));
           offset = end + closeToken.length();
         }

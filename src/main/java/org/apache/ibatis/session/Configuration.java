@@ -1,31 +1,4 @@
-/**
- *    Copyright 2009-2019 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.session;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.function.BiFunction;
 
 import org.apache.ibatis.binding.MapperRegistry;
 import org.apache.ibatis.builder.CacheRefResolver;
@@ -42,11 +15,7 @@ import org.apache.ibatis.cache.impl.PerpetualCache;
 import org.apache.ibatis.datasource.jndi.JndiDataSourceFactory;
 import org.apache.ibatis.datasource.pooled.PooledDataSourceFactory;
 import org.apache.ibatis.datasource.unpooled.UnpooledDataSourceFactory;
-import org.apache.ibatis.executor.BatchExecutor;
-import org.apache.ibatis.executor.CachingExecutor;
-import org.apache.ibatis.executor.Executor;
-import org.apache.ibatis.executor.ReuseExecutor;
-import org.apache.ibatis.executor.SimpleExecutor;
+import org.apache.ibatis.executor.*;
 import org.apache.ibatis.executor.keygen.KeyGenerator;
 import org.apache.ibatis.executor.loader.ProxyFactory;
 import org.apache.ibatis.executor.loader.cglib.CglibProxyFactory;
@@ -66,13 +35,7 @@ import org.apache.ibatis.logging.log4j2.Log4j2Impl;
 import org.apache.ibatis.logging.nologging.NoLoggingImpl;
 import org.apache.ibatis.logging.slf4j.Slf4jImpl;
 import org.apache.ibatis.logging.stdout.StdOutImpl;
-import org.apache.ibatis.mapping.BoundSql;
-import org.apache.ibatis.mapping.Environment;
-import org.apache.ibatis.mapping.MappedStatement;
-import org.apache.ibatis.mapping.ParameterMap;
-import org.apache.ibatis.mapping.ResultMap;
-import org.apache.ibatis.mapping.ResultSetType;
-import org.apache.ibatis.mapping.VendorDatabaseIdProvider;
+import org.apache.ibatis.mapping.*;
 import org.apache.ibatis.parsing.XNode;
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.plugin.InterceptorChain;
@@ -95,6 +58,9 @@ import org.apache.ibatis.type.TypeAliasRegistry;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
+import java.util.*;
+import java.util.function.BiFunction;
+
 /**
  * @author Clinton Begin
  */
@@ -109,6 +75,7 @@ public class Configuration {
   protected boolean multipleResultSetsEnabled = true;
   protected boolean useGeneratedKeys;
   protected boolean useColumnLabel = true;
+  // 二级缓存
   protected boolean cacheEnabled = true;
   protected boolean callSettersOnNulls;
   protected boolean useActualParamName = true;
@@ -148,11 +115,15 @@ public class Configuration {
   protected final InterceptorChain interceptorChain = new InterceptorChain();
   protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry();
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
+
+  //跟解析SQL语句相关的类
   protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
   protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection")
       .conflictMessageProducer((savedValue, targetValue) ->
           ". please check " + savedValue.getResource() + " and " + targetValue.getResource());
+
+  //缓存信息 二级缓存 这里的key是Namespace
   protected final Map<String, Cache> caches = new StrictMap<>("Caches collection");
   protected final Map<String, ResultMap> resultMaps = new StrictMap<>("Result Maps collection");
   protected final Map<String, ParameterMap> parameterMaps = new StrictMap<>("Parameter Maps collection");
@@ -208,6 +179,7 @@ public class Configuration {
     typeAliasRegistry.registerAlias("CGLIB", CglibProxyFactory.class);
     typeAliasRegistry.registerAlias("JAVASSIST", JavassistProxyFactory.class);
 
+    // 注册到 languageRegistry 中
     languageRegistry.setDefaultDriverClass(XMLLanguageDriver.class);
     languageRegistry.register(RawLanguageDriver.class);
   }
@@ -590,6 +562,10 @@ public class Configuration {
 
   public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
     StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
+
+    //执行下面的拦截器链的pluginAll方法，由于我们这里没有配置拦截器，该方法也就结束了。
+    // 拦截器就是实现了Interceptor接口的类，国内著名的分页插件pagehelper就是这个原理
+    //todo  分页插件的实现
     statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);
     return statementHandler;
   }
@@ -602,16 +578,23 @@ public class Configuration {
     executorType = executorType == null ? defaultExecutorType : executorType;
     executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
     Executor executor;
+
     if (ExecutorType.BATCH == executorType) {
       executor = new BatchExecutor(this, transaction);
     } else if (ExecutorType.REUSE == executorType) {
       executor = new ReuseExecutor(this, transaction);
     } else {
+      //默认是这个执行器
       executor = new SimpleExecutor(this, transaction);
     }
+
+    //MyBatis默认开启着对mapper的缓存(这其实就是Mybatis的二级缓存,但是,不论是注解版,还是xml版,
+    // 都需要添加额外的配置才能使添加这个额外配置的mapper享受二级缓存,二级缓存被这个CachingExecutor维护着)
     if (cacheEnabled) {
+      System.out.println("==========构建二级缓存执行器==================");
       executor = new CachingExecutor(executor);
     }
+    //todo 插件使用
     executor = (Executor) interceptorChain.pluginAll(executor);
     return executor;
   }
@@ -749,9 +732,13 @@ public class Configuration {
   }
 
   public MappedStatement getMappedStatement(String id, boolean validateIncompleteStatements) {
+    // 校验，保证所有 MappedStatement 已经构造完毕
     if (validateIncompleteStatements) {
+      //构造sql语句
       buildAllStatements();
     }
+
+    // 获取 MappedStatement 对象
     return mappedStatements.get(id);
   }
 
@@ -776,6 +763,7 @@ public class Configuration {
   }
 
   public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
+
     return mapperRegistry.getMapper(type, sqlSession);
   }
 
@@ -799,18 +787,21 @@ public class Configuration {
   }
 
   /*
+    解析缓存中所有未处理的语句节点。当所有的映射器都被添加时，建议调用这个方法，
+    因为它提供了快速失败语句验证。意思是如果链表中任何一个不为空，则抛出异常，是一种快速失败的机制。
+    那么这些是什么时候添加进链表的呢？答案是catch的时候，看代码
    * Parses all the unprocessed statement nodes in the cache. It is recommended
    * to call this method once all the mappers are added as it provides fail-fast
    * statement validation.
    */
   protected void buildAllStatements() {
     parsePendingResultMaps();
-    if (!incompleteCacheRefs.isEmpty()) {
+    if (!incompleteCacheRefs.isEmpty()) {  // 保证 incompleteResultMaps 被解析完
       synchronized (incompleteCacheRefs) {
         incompleteCacheRefs.removeIf(x -> x.resolveCacheRef() != null);
       }
     }
-    if (!incompleteStatements.isEmpty()) {
+    if (!incompleteStatements.isEmpty()) { // 保证 incompleteCacheRefs 被解析完
       synchronized (incompleteStatements) {
         incompleteStatements.removeIf(x -> {
           x.parseStatementNode();
@@ -819,7 +810,7 @@ public class Configuration {
       }
     }
     if (!incompleteMethods.isEmpty()) {
-      synchronized (incompleteMethods) {
+      synchronized (incompleteMethods) { // 保证 incompleteStatements 被解析完
         incompleteMethods.removeIf(x -> {
           x.resolve();
           return true;
@@ -957,6 +948,12 @@ public class Configuration {
       return super.put(key, value);
     }
 
+
+    /**
+     * 如何扩展呢？如果返回值是null，则抛出异常，JDK中HashMap 可是不抛出异常的，如果 value是 Ambiguity 类型，也抛出异常，说明 key 值不够清晰。
+     * @param key
+     * @return
+     */
     @Override
     public V get(Object key) {
       V value = super.get(key);

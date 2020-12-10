@@ -33,7 +33,7 @@ class InlineCollectionWithDotTest {
 
   public void openSession(String aConfig) throws Exception {
 
-    final String resource = "org/apache/ibatis/submitted/inline_association_with_dot/ibatis-" + aConfig + ".xml";
+    final String resource = "org/apache/ibatis/submitted/inline_association_with_dot/ibatis-" + aConfig + ".annotation";
     try (Reader batisConfigReader = Resources.getResourceAsReader(resource)) {
 
       SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(batisConfigReader);

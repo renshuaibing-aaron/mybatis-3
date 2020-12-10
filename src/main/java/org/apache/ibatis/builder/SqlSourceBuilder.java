@@ -1,18 +1,3 @@
-/**
- *    Copyright 2009-2019 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.builder;
 
 import java.util.ArrayList;
@@ -29,32 +14,50 @@ import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.type.JdbcType;
 
 /**
+ * 继承 BaseBuilder 抽象类，SqlSource 构建器，负责将 SQL 语句中的 #{} 替换成相应的 ? 占位符，
+ * 并获取该 ? 占位符对应的 org.apache.ibatis.mapping.ParameterMapping 对象
  * @author Clinton Begin
  */
 public class SqlSourceBuilder extends BaseBuilder {
 
+  //这个是什么？？？
   private static final String PARAMETER_PROPERTIES = "javaType,jdbcType,mode,numericScale,resultMap,typeHandler,jdbcTypeName";
 
   public SqlSourceBuilder(Configuration configuration) {
     super(configuration);
   }
 
+  /**
+   * 执行解析原始 SQL ，成为 SqlSource 对象
+   * @param originalSql 原始 SQL
+   * @param parameterType  参数类型
+   * @param additionalParameters  附加参数集合。可能是空集合，也可能是 {@link org.apache.ibatis.scripting.xmltags.DynamicContext#bindings} 集合
+   * @return  SqlSource 对象
+   */
   public SqlSource parse(String originalSql, Class<?> parameterType, Map<String, Object> additionalParameters) {
+    //  <1> 创建 ParameterMappingTokenHandler 对象
     ParameterMappingTokenHandler handler = new ParameterMappingTokenHandler(configuration, parameterType, additionalParameters);
+    // <2> 创建 GenericTokenParser 对象
     GenericTokenParser parser = new GenericTokenParser("#{", "}", handler);
+    // <3> 执行解析
     String sql = parser.parse(originalSql);
+    // <4> 创建 StaticSqlSource 对象
     return new StaticSqlSource(configuration, sql, handler.getParameterMappings());
   }
 
   private static class ParameterMappingTokenHandler extends BaseBuilder implements TokenHandler {
-
+  //ParameterMapping 数组
     private List<ParameterMapping> parameterMappings = new ArrayList<>();
+
+    //参数类型
     private Class<?> parameterType;
+    //additionalParameters 参数的对应的 MetaObject 对象
     private MetaObject metaParameters;
 
     public ParameterMappingTokenHandler(Configuration configuration, Class<?> parameterType, Map<String, Object> additionalParameters) {
       super(configuration);
       this.parameterType = parameterType;
+      // 创建 additionalParameters 参数的对应的 MetaObject 对象
       this.metaParameters = configuration.newMetaObject(additionalParameters);
     }
 
@@ -64,14 +67,18 @@ public class SqlSourceBuilder extends BaseBuilder {
 
     @Override
     public String handleToken(String content) {
+      // <1> 构建 ParameterMapping 对象，并添加到 parameterMappings 中
       parameterMappings.add(buildParameterMapping(content));
+      // <2> 返回 ? 占位符
       return "?";
     }
 
     private ParameterMapping buildParameterMapping(String content) {
+      // <1> 解析成 Map 集合
       Map<String, String> propertiesMap = parseParameterMapping(content);
-      String property = propertiesMap.get("property");
-      Class<?> propertyType;
+      // <2> 获得属性的名字和类型
+      String property = propertiesMap.get("property"); // 名字
+      Class<?> propertyType;  // 类型
       if (metaParameters.hasGetter(property)) { // issue #448 get type from additional params
         propertyType = metaParameters.getGetterType(property);
       } else if (typeHandlerRegistry.hasTypeHandler(parameterType)) {

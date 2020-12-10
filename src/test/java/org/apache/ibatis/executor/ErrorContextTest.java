@@ -24,8 +24,8 @@ class ErrorContextTest {
   @Test
   void shouldShowProgressiveErrorContextBuilding() {
     ErrorContext context = ErrorContext.instance();
-    context.resource("somefile.xml").activity("some activity").object("some object").message("Here's more info.");
-    context.toString().startsWith("### The error occurred in somefile.xml.");
+    context.resource("somefile.annotation").activity("some activity").object("some object").message("Here's more info.");
+    context.toString().startsWith("### The error occurred in somefile.annotation.");
     context.reset();
 
     context.activity("some activity").object("some object").message("Here's more info.");
